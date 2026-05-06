@@ -32,7 +32,7 @@
    - Chrome / Edge: `F12` 또는 `Cmd + Option + I`
    - Safari: 개발자 메뉴 활성화 후 Web Inspector 실행
 4. `Console` 탭을 엽니다.
-5. 스크립트를 붙여넣고 실행합니다.
+5. [스크립트](https://github.com/ygddabong/watcha_data_export/blob/main/watcha_data_export)를 붙여넣고 실행합니다.
 6. 다운로드가 완료되면 .csv 파일이 자동으로 저장됩니다.
 
 ---

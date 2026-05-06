@@ -1,0 +1,205 @@
+!async function () {
+  const userLink = document.querySelector('a[href*="/users/"]');
+
+  if (!userLink) {
+    console.error("유저 링크를 찾을 수 없습니다.");
+    return;
+  }
+
+  const userId = userLink.href.replace(/^.*\/users\/(.*)$/, "$1");
+  const deviceId = document.cookie
+    .split("; ")
+    .find(r => r.startsWith("_c_pdi="))
+    ?.split("=")[1] || "";
+
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+  const csvEscape = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+  const request = async (url, maxRetry = 10) => {
+    let retry = 0;
+
+    while (retry < maxRetry) {
+      await sleep(700);
+
+      const res = await fetch(`https://pedia.watcha.com${url}`, {
+        credentials: "same-origin",
+        headers: {
+          "accept": "application/vnd.frograms+json;version=2.1.0",
+          "x-frograms-app-code": "Galaxy",
+          "x-frograms-client": "Galaxy-Web-App",
+          "x-frograms-client-version": "2.1.0",
+          "x-frograms-version": "2.1.0",
+          "x-frograms-device-identifier": deviceId,
+          "x-frograms-galaxy-language": "ko",
+          "x-frograms-galaxy-region": "KR"
+        }
+      });
+
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || 10;
+        console.log(`429 발생, ${retryAfter}초 후 재시도...`);
+        await sleep(retryAfter * 1000);
+        retry++;
+        continue;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      }
+
+      const json = await res.json();
+
+      if (!json.result) {
+        console.log("result 없음, 재시도...", json);
+        await sleep(5000);
+        retry++;
+        continue;
+      }
+
+      return json;
+    }
+
+    throw new Error(`최대 재시도 횟수 초과: ${url}`);
+  };
+
+  const fetchAll = async (url, onProgress) => {
+    const items = [];
+    let next = url;
+
+    while (next) {
+      const json = await request(next);
+      const result = json.result.result || [];
+
+      items.push(...result);
+      onProgress?.(result.length);
+
+      next = json.result.next_uri;
+    }
+
+    return items;
+  };
+
+  const formatDate = value => {
+    const d = new Date(value);
+    if (isNaN(d)) return "";
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const merge = (ratings, comments, type) => {
+    const commentMap = new Map(comments.map(c => [c.content_code, c]));
+
+    return ratings.map(e => {
+      const code = e.content.code;
+      const c = commentMap.get(code);
+
+      const watchedAt = formatDate(
+        c?.watched_at || e.user_content_action?.watched_at
+      );
+
+      const directors = (
+        e.content.director_names ||
+        c?.content?.director_names ||
+        []
+      ).join(", ");
+
+      const review = c?.text?.trim() || "";
+
+      return [
+        code,
+        `https://pedia.watcha.com/ko-KR/contents/${code}`,
+        e.content.title,
+        type,
+        e.content.year,
+        directors,
+        watchedAt,
+        Number(e.user_content_action.rating) / 2,
+        review,
+        c?.spoiler ?? ""
+      ];
+    });
+  };
+
+  const bar = Object.assign(document.createElement("div"), {
+    style: "position:fixed;left:0;top:0;right:0;height:59px;z-index:9999;display:flex;align-items:center;background-color:#fff;border-bottom:1px solid #eee;"
+  });
+
+  const inner = Object.assign(document.createElement("div"), {
+    style: "max-width:1320px;width:100%;margin:0 auto;padding:0 32px;"
+  });
+
+  const msg = Object.assign(document.createElement("p"), {
+    style: "color:#7e7e7e;font-size:15px;letter-spacing:-0.3px;"
+  });
+
+  const pct = Object.assign(document.createElement("span"), {
+    style: "font-weight:bold"
+  });
+
+  msg.innerText = "왓챠 데이터 다운로드 중입니다. ";
+  msg.appendChild(pct);
+  inner.appendChild(msg);
+  bar.appendChild(inner);
+  document.body.appendChild(bar);
+
+  try {
+    const userInfo = await request(`/api/users/${userId}`);
+    const totalCount = userInfo.result?.ratings_count || 0;
+
+    const counted = { n: 0 };
+    const progress = n => {
+      counted.n += n;
+      pct.innerText = totalCount
+        ? `${Math.min((counted.n / totalCount * 100), 100).toFixed(0)}%`
+        : `${counted.n}개`;
+    };
+
+    const [mRatings, mComments, tRatings, tComments] = await Promise.all([
+      fetchAll(`/api/users/${userId}/contents/movies/ratings`, progress),
+      fetchAll(`/api/users/${userId}/contents/movies/comments`),
+      fetchAll(`/api/users/${userId}/contents/tv_seasons/ratings`, progress),
+      fetchAll(`/api/users/${userId}/contents/tv_seasons/comments`)
+    ]);
+
+    const rows = [
+      ...merge(mRatings, mComments, "MOVIE"),
+      ...merge(tRatings, tComments, "TV")
+    ];
+
+    const headers = [
+      "ID",
+      "URL",
+      "Title",
+      "Type",
+      "Year",
+      "Directors",
+      "WatchedAt",
+      "Rating",
+      "Review",
+      "Spoiler"
+    ];
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...rows.map(row => row.map(csvEscape).join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${userId}-watcha.csv`;
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+
+    console.log(`다운로드 완료: ${rows.length}개`);
+  } catch (err) {
+    console.error("다운로드 실패:", err);
+    alert("데이터 다운로드에 실패했습니다. 콘솔을 확인해 주세요.");
+  } finally {
+    bar.remove();
+  }
+}();

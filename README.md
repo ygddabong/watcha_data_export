@@ -19,11 +19,24 @@
 
 ---
 
+## How to Use
+
+1. 브라우저에서 [왓챠피디아](https://pedia.watcha.com)에 로그인합니다.
+2. 본인 프로필 페이지로 이동합니다.
+3. 개발자 도구를 엽니다.
+   - Chrome / Edge: `F12` 또는 `Cmd + Option + I`
+   - Safari: 개발자 메뉴 활성화 후 Web Inspector 실행
+4. `Console` 탭을 엽니다.
+5. 스크립트를 붙여넣고 실행합니다.
+6. 다운로드가 완료되면 .csv 파일이 자동으로 저장됩니다.
+
+---
 ## Screenshots
 ### 콘솔 입력 화면
 <img width="1920" height="1080" alt="스크린샷 2026-05-06 오후 10 10 18" src="https://github.com/user-attachments/assets/ccf44f60-9f76-4c0f-9885-a16f76ab2b41" />
 
 ‼️ 콘솔에서 아래와 같은 에러 메세지가 나오는 경우에는, 붙여넣기 허용 을 입력하고 엔터를 눌러 주세요. 허용이 된 후 스크립트를 입력해 주세요.
+
 *이해하지 못했거나 직접 검토하지 않은 코드는 DevTools 콘솔에 붙여넣지 마세요. 이렇게 하면 공격자가 신원을 도용하거나 내 컴퓨터를 제어할 수 있습니다. 붙여넣기를 허용하려면 아래에 {PH1}을 입력하고 Enter 키를 누르세요.*
 
 
@@ -53,19 +66,6 @@
 | Rating | 별점 |
 | Review | 리뷰 |
 | Spoiler | 스포일러 여부 |
-
----
-
-## How to Use
-
-1. 브라우저에서 [왓챠피디아](https://pedia.watcha.com)에 로그인합니다.
-2. 본인 프로필 페이지로 이동합니다.
-3. 개발자 도구를 엽니다.
-   - Chrome / Edge: `F12` 또는 `Cmd + Option + I`
-   - Safari: 개발자 메뉴 활성화 후 Web Inspector 실행
-4. `Console` 탭을 엽니다.
-5. 스크립트를 붙여넣고 실행합니다.
-6. 다운로드가 완료되면 `{userId}-watcha.csv` 파일이 자동으로 저장됩니다.
 
 ---
 

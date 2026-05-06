@@ -38,7 +38,8 @@
 ---
 ## Screenshots
 ### 콘솔 입력 화면
-<img width="1920" height="1080" alt="스크린샷 2026-05-06 오후 10 10 18" src="https://github.com/user-attachments/assets/ccf44f60-9f76-4c0f-9885-a16f76ab2b41" />
+<img width="1920" height="1080" alt="스크린샷 2026-05-06 오후 10 10 18" src="https://github.com/user-attachments/assets/ae877500-79cc-484c-a22e-064c1485cf04" />
+
 
 ‼️ 콘솔에서 아래와 같은 에러 메세지가 나오는 경우에는, 붙여넣기 허용 을 입력하고 엔터를 눌러 주세요. 허용이 된 후 스크립트를 입력해 주세요.
 
